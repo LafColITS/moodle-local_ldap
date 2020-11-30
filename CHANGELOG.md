@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Migrate CI builds to Github Actions
 - Code cleanup
 
 ## v3.11.1 (April 6, 2023)

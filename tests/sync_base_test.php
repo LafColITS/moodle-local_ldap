@@ -22,12 +22,16 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace local_ldap;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
 require_once($CFG->dirroot.'/local/ldap/locallib.php');
 require_once($CFG->dirroot.'/auth/ldap/tests/plugin_test.php');
+require_once($CFG->dirroot.'/auth/ldap/auth.php');
+require_once($CFG->libdir.'/ldaplib.php');
 
 // Detect server type; we assume rfc2307.
 if (!defined('TEST_AUTH_LDAP_USER_TYPE')) {
@@ -41,24 +45,12 @@ if (!defined('TEST_AUTH_LDAP_USER_TYPE')) {
  * @copyright 2016 Lafayette College ITS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_ldap_sync_testcase extends advanced_testcase {
+abstract class sync_base_test extends \advanced_testcase {
 
     public function test_cohort_group_sync() {
         global $CFG, $DB;
 
-        if (!extension_loaded('ldap')) {
-            $this->markTestSkipped('LDAP extension is not loaded.');
-        }
-
-        $this->resetAfterTest();
-
-        require_once($CFG->dirroot.'/auth/ldap/auth.php');
-        require_once($CFG->libdir.'/ldaplib.php');
-
-        if (!defined('TEST_AUTH_LDAP_HOST_URL') or !defined('TEST_AUTH_LDAP_BIND_DN') or !defined('TEST_AUTH_LDAP_BIND_PW')
-                or !defined('TEST_AUTH_LDAP_DOMAIN')) {
-            $this->markTestSkipped('External LDAP test server not configured.');
-        }
+        $this->validate_environment();
 
         // Make sure we can connect the server.
         $connection = $this->connect_to_ldap();
@@ -66,11 +58,11 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->enable_plugin();
 
         // Create new empty test container.
-        $testcontainer = $this->get_test_container();
+        $testcontainer = $this->get_ldap_test_container();
         $topdn = $testcontainer . ',' . TEST_AUTH_LDAP_DOMAIN;
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
 
-        $o = $this->get_test_ou();
+        $o = $this->get_ldap_test_ou();
         if (!ldap_add($connection, $topdn, $o)) {
             $this->markTestSkipped('Can not create test LDAP container.');
         }
@@ -164,25 +156,25 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertCount(2000, $events);
 
         // Add the cohorts.
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "History Department";
         $cohort->idnumber = 'history';
         $historyid = cohort_add_cohort($cohort);
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "English Department";
         $cohort->idnumber = 'english';
         $englishid = cohort_add_cohort($cohort);
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "English Department (bis)";
         $cohort->idnumber = 'english(bis)';
         $englishbisid = cohort_add_cohort($cohort);
 
         // We should find 2004 groups: the 2000 random groups, the three departments,
         // and the all employees group.
-        $plugin = new local_ldap();
+        $plugin = new \local_ldap();
         $groups = $plugin->ldap_get_grouplist();
         $this->assertEquals(2004, count($groups));
 
@@ -205,8 +197,8 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertEquals(3, $members);
 
         // Add the big cohort.
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "All employees";
         $cohort->idnumber = 'allemployees';
         $allemployeesid = cohort_add_cohort($cohort);
@@ -241,19 +233,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
     public function test_cohort_autocreation() {
         global $CFG, $DB;
 
-        if (!extension_loaded('ldap')) {
-            $this->markTestSkipped('LDAP extension is not loaded.');
-        }
-
-        $this->resetAfterTest();
-
-        require_once($CFG->dirroot.'/auth/ldap/auth.php');
-        require_once($CFG->libdir.'/ldaplib.php');
-
-        if (!defined('TEST_AUTH_LDAP_HOST_URL') or !defined('TEST_AUTH_LDAP_BIND_DN') or !defined('TEST_AUTH_LDAP_BIND_PW')
-                or !defined('TEST_AUTH_LDAP_DOMAIN')) {
-            $this->markTestSkipped('External LDAP test server not configured.');
-        }
+        $this->validate_environment();
 
         // Make sure we can connect the server.
         $connection = $this->connect_to_ldap();
@@ -261,11 +241,11 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->enable_plugin();
 
         // Create new empty test container.
-        $testcontainer = $this->get_test_container();
+        $testcontainer = $this->get_ldap_test_container();
         $topdn = $testcontainer . ',' . TEST_AUTH_LDAP_DOMAIN;
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
 
-        $o = $this->get_test_ou();
+        $o = $this->get_ldap_test_ou();
         if (!ldap_add($connection, $topdn, $o)) {
             $this->markTestSkipped('Can not create test LDAP container.');
         }
@@ -342,7 +322,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertCount(5, $events);
 
         // Sync the cohorts.
-        $plugin = new local_ldap();
+        $plugin = new \local_ldap();
         $plugin->sync_cohorts_by_group();
 
         // All three cohorts should be created and have 3 members.
@@ -368,30 +348,18 @@ class local_ldap_sync_testcase extends advanced_testcase {
     public function test_cohort_attribute_sync() {
         global $CFG, $DB;
 
-        if (!extension_loaded('ldap')) {
-            $this->markTestSkipped('LDAP extension is not loaded.');
-        }
-
-        $this->resetAfterTest();
-
-        require_once($CFG->dirroot.'/auth/ldap/auth.php');
-        require_once($CFG->libdir.'/ldaplib.php');
-
-        if (!defined('TEST_AUTH_LDAP_HOST_URL') or !defined('TEST_AUTH_LDAP_BIND_DN') or !defined('TEST_AUTH_LDAP_BIND_PW')
-                or !defined('TEST_AUTH_LDAP_DOMAIN')) {
-            $this->markTestSkipped('External LDAP test server not configured.');
-        }
+        $this->validate_environment();
 
         $connection = $this->connect_to_ldap();
 
         $this->enable_plugin();
 
         // Create new empty test container.
-        $testcontainer = $this->get_test_container();
+        $testcontainer = $this->get_ldap_test_container();
         $topdn = $testcontainer . ',' . TEST_AUTH_LDAP_DOMAIN;
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
 
-        $o = $this->get_test_ou();
+        $o = $this->get_ldap_test_ou();
         if (!ldap_add($connection, $topdn, $o)) {
             $this->markTestSkipped('Can not create test LDAP container.');
         }
@@ -403,25 +371,23 @@ class local_ldap_sync_testcase extends advanced_testcase {
         ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
         for ($i = 1; $i <= 2000; $i++) {
             $this->create_ldap_user($connection, $topdn, $i);
-            ldap_mod_add($connection, "cn=username$i,ou=users,$topdn",
-                array('objectClass' => 'eduPerson'));
         }
 
         // All users will be employees. Odd users will be faculty. Even will be staff.
         // Some will be staff(pt).
         for ($i = 1; $i <= 2000; $i++) {
             ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                array('eduPersonAffiliation' => 'employee'));
+                array($this->get_ldap_user_attribute_class() => 'employee'));
             if ($i % 2 == 1) {
                 ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array('eduPersonAffiliation' => 'faculty'));
+                    array($this->get_ldap_user_attribute_class() => 'faculty'));
             } else {
                 ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array('eduPersonAffiliation' => 'staff'));
+                    array($this->get_ldap_user_attribute_class() => 'staff'));
             }
             if ($i % 50 == 0) {
                 ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array('eduPersonAffiliation' => 'staff(pt)'));
+                    array($this->get_ldap_user_attribute_class() => 'staff(pt)'));
             }
         }
 
@@ -456,6 +422,9 @@ class local_ldap_sync_testcase extends advanced_testcase {
         set_config('field_lock_lastname', 'unlocked', 'auth_ldap');
         $this->assertEquals(2, $DB->count_records('user'));
 
+        // Configure local plugin.
+        set_config('cohort_synching_ldap_attribute_attribute', $this->get_ldap_user_attribute_class(), 'local_ldap');
+
         // Sync the users.
         $auth = get_auth_plugin('ldap');
 
@@ -470,29 +439,29 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertCount(2000, $events);
 
         // Add the cohorts.
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "All employees";
         $cohort->idnumber = 'employee';
         $employeeid = cohort_add_cohort($cohort);
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "All faculty";
         $cohort->idnumber = 'faculty';
         $facultyid = cohort_add_cohort($cohort);
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "All staff";
         $cohort->idnumber = 'staff';
         $staffid = cohort_add_cohort($cohort);
-        $cohort = new stdClass();
-        $cohort->contextid = context_system::instance()->id;
+        $cohort = new \stdClass();
+        $cohort->contextid = \context_system::instance()->id;
         $cohort->name = "All staff (pt)";
         $cohort->idnumber = 'staff(pt)';
         $staffptid = cohort_add_cohort($cohort);
 
         // Count the distinct attribute values.
-        $plugin = new local_ldap();
+        $plugin = new \local_ldap();
         $attributes = $plugin->get_attribute_distinct_values();
         $this->assertEquals(4, count($attributes));
 
@@ -518,7 +487,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
 
         // Add an affiliation in LDAP and ensure he'd added.
         ldap_mod_add($connection, "cn=username500,ou=users,$topdn",
-            array('eduPersonAffiliation' => 'faculty'));
+            array($this->get_ldap_user_attribute_class() => 'faculty'));
         $members = $DB->count_records('cohort_members', array('cohortid' => $facultyid));
         $this->assertEquals(1000, $members);
         $plugin->sync_cohorts_by_attribute();
@@ -527,7 +496,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
 
         // Remove a user from a group in LDAP and ensure he's deleted.
         ldap_mod_del($connection, "cn=username400,ou=users,$topdn",
-            array('eduPersonAffiliation' => 'staff'));
+            array($this->get_ldap_user_attribute_class() => 'staff'));
         $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
         $this->assertEquals(1000, $members);
         $plugin->sync_cohorts_by_attribute();
@@ -539,41 +508,38 @@ class local_ldap_sync_testcase extends advanced_testcase {
     }
 
     /**
+     * Verify that we can run at least one test.
+     */
+    protected function validate_environment(): void {
+        if (!extension_loaded('ldap')) {
+            $this->markTestSkipped('LDAP extension is not loaded.');
+        }
+
+        $this->resetAfterTest();
+
+        if (!defined('TEST_AUTH_LDAP_HOST_URL') || !defined('TEST_AUTH_LDAP_BIND_DN') || !defined('TEST_AUTH_LDAP_BIND_PW')
+                || !defined('TEST_AUTH_LDAP_DOMAIN')) {
+            $this->markTestSkipped('External LDAP test server not configured.');
+        }
+
+        if ($this->get_ldap_user_type() != TEST_AUTH_LDAP_USER_TYPE) {
+            $this->markTestSkipped("Incompatible LDAP server type");
+        }
+    }
+
+    /**
      * Return the approrpiate top-level OU depending on the environment.
      *
      * @return string The top-level OU.
      */
-    protected function get_test_container() {
-        switch(TEST_AUTH_LDAP_USER_TYPE) {
-            case 'rfc2307':
-                return 'dc=moodletest';
-                break;
-            case 'ad':
-                return 'ou=Moodletest';
-                break;
-        }
-    }
+    abstract protected function get_ldap_test_container(): string;
 
     /**
      * Return the approrpiate test OU depending on the environment.
      *
      * @return array The test container OU.
      */
-    protected function get_test_ou() {
-        $o = array();
-        switch(TEST_AUTH_LDAP_USER_TYPE) {
-            case 'rfc2307':
-                $o['objectClass'] = array('dcObject', 'organizationalUnit');
-                $o['dc'] = 'moodletest';
-                $o['ou'] = 'MOODLETEST';
-                break;
-            case 'ad':
-                $o['objectClass'] = array('organizationalUnit');
-                $o['ou'] = 'Moodletest';
-                break;
-        }
-        return $o;
-    }
+    abstract protected function get_ldap_test_ou(): array;
 
     /**
      * Create an LDAP user in the test environment.
@@ -587,7 +553,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
      */
     protected function create_ldap_user($connection, $topdn, $i) {
         $o = array();
-        $o['objectClass']   = array('inetOrgPerson', 'organizationalPerson', 'person', 'posixAccount');
+        $o['objectClass']   = $this->get_ldap_user_object_classes();
         $o['cn']            = 'username'.$i;
         $o['sn']            = 'Lastname'.$i;
         $o['givenName']     = 'Firstname'.$i;
@@ -599,6 +565,27 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $o['userPassword']  = 'pass'.$i;
         ldap_add($connection, 'cn='.$o['cn'].',ou=users,'.$topdn, $o);
     }
+
+    /**
+     * Get the object classes for an LDAP user.
+     *
+     * @return array
+     */
+    abstract protected function get_ldap_user_object_classes(): array;
+
+    /**
+     * Get the attribute class used for synchronization.
+     *
+     * @return string
+     */
+    abstract protected function get_ldap_user_attribute_class(): string;
+
+    /**
+     * Get the LDAP user type.
+     *
+     * @return string
+     */
+    abstract protected function get_ldap_user_type(): string;
 
     /**
      * Delete an LDAP user in the test environment.
@@ -723,7 +710,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
                     }
                     $info = ldap_get_entries($ldapconnection, $res);
                     foreach ($info as $i) {
-                        if (isset($i['dn']) and $info[0]['dn'] != $i['dn']) {
+                        if (isset($i['dn']) && $info[0]['dn'] != $i['dn']) {
                             $todelete[] = $i['dn'];
                         }
                     }
