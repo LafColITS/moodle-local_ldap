@@ -238,6 +238,128 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
     }
 
+    public function test_cohort_autocreation() {
+        global $CFG, $DB;
+
+        if (!extension_loaded('ldap')) {
+            $this->markTestSkipped('LDAP extension is not loaded.');
+        }
+
+        $this->resetAfterTest();
+
+        require_once($CFG->dirroot.'/auth/ldap/auth.php');
+        require_once($CFG->libdir.'/ldaplib.php');
+
+        if (!defined('TEST_AUTH_LDAP_HOST_URL') or !defined('TEST_AUTH_LDAP_BIND_DN') or !defined('TEST_AUTH_LDAP_BIND_PW')
+                or !defined('TEST_AUTH_LDAP_DOMAIN')) {
+            $this->markTestSkipped('External LDAP test server not configured.');
+        }
+
+        // Make sure we can connect the server.
+        $connection = $this->connect_to_ldap();
+
+        $this->enable_plugin();
+
+        // Create new empty test container.
+        $testcontainer = $this->get_test_container();
+        $topdn = $testcontainer . ',' . TEST_AUTH_LDAP_DOMAIN;
+        $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
+
+        $o = $this->get_test_ou();
+        if (!ldap_add($connection, $topdn, $o)) {
+            $this->markTestSkipped('Can not create test LDAP container.');
+        }
+
+        // Create 5 users.
+        $o = array();
+        $o['objectClass'] = array('organizationalUnit');
+        $o['ou']          = 'users';
+        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
+        for ($i = 1; $i <= 5; $i++) {
+            $this->create_ldap_user($connection, $topdn, $i);
+        }
+
+        // Create department groups.
+        $o = array();
+        $o['objectClass'] = array('organizationalUnit');
+        $o['ou']          = 'groups';
+        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
+        $departments = array('english', 'history', 'english(bis)');
+        foreach ($departments as $department) {
+            $o = array();
+            $o['objectClass'] = array('groupOfNames');
+            $o['cn']          = $department;
+            $o['member']      = array('cn=username1,ou=users,'.$topdn, 'cn=username2,ou=users,'.$topdn,
+                    'cn=username5,ou=users,'.$topdn);
+            ldap_add($connection, 'cn='.$o['cn'].',ou=groups,'.$topdn, $o);
+        }
+
+        // Configure the authentication plugin a bit.
+        set_config('host_url', TEST_AUTH_LDAP_HOST_URL, 'auth_ldap');
+        set_config('start_tls', 0, 'auth_ldap');
+        set_config('ldap_version', 3, 'auth_ldap');
+        set_config('ldapencoding', 'utf-8', 'auth_ldap');
+        set_config('pagesize', '2', 'auth_ldap');
+        set_config('bind_dn', TEST_AUTH_LDAP_BIND_DN, 'auth_ldap');
+        set_config('bind_pw', TEST_AUTH_LDAP_BIND_PW, 'auth_ldap');
+        set_config('user_type', TEST_AUTH_LDAP_USER_TYPE, 'auth_ldap');
+        set_config('contexts', 'ou=users,'.$topdn.';ou=groups,'.$topdn, 'auth_ldap');
+        set_config('search_sub', 0, 'auth_ldap');
+        set_config('opt_deref', LDAP_DEREF_NEVER, 'auth_ldap');
+        set_config('user_attribute', 'cn', 'auth_ldap');
+        set_config('memberattribute', 'member', 'auth_ldap');
+        set_config('memberattribute_isdn', 0, 'auth_ldap');
+        set_config('creators', '', 'auth_ldap');
+        set_config('removeuser', AUTH_REMOVEUSER_KEEP, 'auth_ldap');
+        set_config('field_map_email', 'mail', 'auth_ldap');
+        set_config('field_updatelocal_email', 'oncreate', 'auth_ldap');
+        set_config('field_updateremote_email', '0', 'auth_ldap');
+        set_config('field_lock_email', 'unlocked', 'auth_ldap');
+        set_config('field_map_firstname', 'givenName', 'auth_ldap');
+        set_config('field_updatelocal_firstname', 'oncreate', 'auth_ldap');
+        set_config('field_updateremote_firstname', '0', 'auth_ldap');
+        set_config('field_lock_firstname', 'unlocked', 'auth_ldap');
+        set_config('field_map_lastname', 'sn', 'auth_ldap');
+        set_config('field_updatelocal_lastname', 'oncreate', 'auth_ldap');
+        set_config('field_updateremote_lastname', '0', 'auth_ldap');
+        set_config('field_lock_lastname', 'unlocked', 'auth_ldap');
+        $this->assertEquals(2, $DB->count_records('user'));
+
+        // Configure the local plugin.
+        set_config('cohort_synching_ldap_groups_autocreate_cohorts', true, 'local_ldap');
+
+        // Sync the users.
+        $auth = get_auth_plugin('ldap');
+
+        ob_start();
+        $sink = $this->redirectEvents();
+        $auth->sync_users(true);
+        $events = $sink->get_events();
+        $sink->close();
+        ob_end_clean();
+
+        // Check events, 5 users created.
+        $this->assertCount(5, $events);
+
+        // Sync the cohorts.
+        $plugin->sync_cohorts_by_group();
+
+        // All three cohorts should be created and have 3 members.
+        $plugin->sync_cohorts_by_group();
+        $historyid = $DB->get_field('cohort', 'id', array('name' => 'history'));
+        $members = $DB->count_records('cohort_members', array('cohortid' => $historyid));
+        $this->assertEquals(3, $members);
+        $englishid = $DB->get_field('cohort', 'id', array('name' => 'english'));
+        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $this->assertEquals(3, $members);
+        $englishbisid = $DB->get_field('cohort', 'id', array('name' => 'english(bis)'));
+        $members = $DB->count_records('cohort_members', array('cohortid' => $englishbisid));
+        $this->assertEquals(3, $members);
+
+        // Cleanup.
+        $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
+    }
+
     public function test_cohort_attribute_sync() {
         global $CFG, $DB;
 
