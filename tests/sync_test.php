@@ -342,6 +342,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertCount(5, $events);
 
         // Sync the cohorts.
+        $plugin = new local_ldap();
         $plugin->sync_cohorts_by_group();
 
         // All three cohorts should be created and have 3 members.
