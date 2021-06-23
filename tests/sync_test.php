@@ -352,7 +352,7 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $this->assertEquals(3, $members);
         $englishid = $DB->get_field('cohort', 'id', array('name' => 'english'));
         $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
-        $this->assertEquals(4, $members);
+        $this->assertEquals(3, $members);
         $englishbisid = $DB->get_field('cohort', 'id', array('name' => 'english(bis)'));
         $members = $DB->count_records('cohort_members', array('cohortid' => $englishbisid));
         $this->assertEquals(3, $members);
