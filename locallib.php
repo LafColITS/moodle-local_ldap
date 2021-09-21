@@ -251,7 +251,7 @@ class local_ldap extends auth_plugin_ldap {
 
             // Get results; bail out on failure.
             $resultg = ldap_search($ldapconnection, $context, $queryg);
-            if (!$resultg) {
+            if ($resultg === false) {
                 return false;
             }
 
@@ -291,7 +291,7 @@ class local_ldap extends auth_plugin_ldap {
                                         }
                                         $this->antirecursionarray[$memberstring] = 1;
                                         $tmp = $this->ldap_get_group_members_rfc($groupcn);
-                                        if (!$tmp) {
+                                        if ($tmp === false) {
                                             return false;
                                         }
                                         unset($this->antirecursionarray[$memberstring]);
@@ -364,7 +364,7 @@ class local_ldap extends auth_plugin_ldap {
                 $resultg = ldap_search($ldapconnection, $context, $queryg, array (
                 $attribut
                 ));
-                if (!$resultg) {
+                if ($resultg === false) {
                     return false;
                 }
 
@@ -391,7 +391,7 @@ class local_ldap extends auth_plugin_ldap {
 
                                 $this->antirecursionarray[$memberstring] = 1;
                                 $tmp = $this->ldap_get_group_members_ad($groupcn);
-                                if (!$tmp) {
+                                if ($tmp === false) {
                                     return false;
                                 }
                                 unset($this->antirecursionarray[$memberstring]);
