@@ -24,8 +24,6 @@
 
 namespace local_ldap\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy subsystem for local_ldap implementing null_provider.
  *
