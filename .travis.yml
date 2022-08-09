@@ -6,10 +6,11 @@ addons:
     packages:
       - ldap-utils
       - slapd
+      - postgresql-12
+      - postgresql-client-12
 
 services:
   - mysql
-  - postgresql
   - docker
 
 cache:
@@ -22,6 +23,7 @@ env:
     - IGNORE_PATHS=tests/sync_test.php
     - CODECHECKER_IGNORE_PATHS=$IGNORE_PATHS,locallib.php
     - PHPCPD_IGNORE_PATHS=$IGNORE_PATHS,locallib.php
+    - PGVER=12
 
 matrix:
   include:
