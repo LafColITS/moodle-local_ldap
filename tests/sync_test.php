@@ -357,6 +357,10 @@ class local_ldap_sync_testcase extends advanced_testcase {
         $members = $DB->count_records('cohort_members', array('cohortid' => $englishbisid));
         $this->assertEquals(3, $members);
 
+        // Direct test of member function.
+        $members = $plugin->ldap_get_group_members('history');
+        $this->assertEquals(3, count($members));
+
         // Cleanup.
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
     }
