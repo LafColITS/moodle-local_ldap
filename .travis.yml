@@ -1,13 +1,13 @@
 language: php
 
 addons:
-  postgresql: "12"
+  postgresql: "13"
   apt:
     packages:
       - ldap-utils
       - slapd
-      - postgresql-12
-      - postgresql-client-12
+      - postgresql-13
+      - postgresql-client-13
 
 services:
   - mysql
@@ -23,7 +23,7 @@ env:
     - IGNORE_PATHS=tests/sync_test.php
     - CODECHECKER_IGNORE_PATHS=$IGNORE_PATHS,locallib.php
     - PHPCPD_IGNORE_PATHS=$IGNORE_PATHS,locallib.php
-    - PGVER=12
+    - PGVER=13
 
 matrix:
   include:
@@ -34,9 +34,11 @@ matrix:
     - php: 7.4
       env: DB=mysqli MOODLE_BRANCH=MOODLE_39_STABLE
     - php: 7.4
-      env: DB=pgsql MOODLE_BRANCH=MOODLE_310_STABLE
-    - php: 7.4
       env: DB=mysqli MOODLE_BRANCH=MOODLE_311_STABLE
+    - php: 8.0
+      env: DB=pgsql MOODLE_BRANCH=MOODLE_400_STABLE
+    - php: 8.0
+      env: DB=pgsql MOODLE_BRANCH=MOODLE_401_STABLE
     - php: 8.0
       env: DB=pgsql MOODLE_BRANCH=master
 
