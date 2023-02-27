@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Dropped support Moodle 3.7-3.10
+- Fixed countable issues under PHP 8.0
+- Rebuilt pagination to remove pre-PHP 7.3 support
+
 ## 3.7.1 (May 17, 2021)
 
 - Prevent mass-unenrollment when a connection fails

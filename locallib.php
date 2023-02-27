@@ -148,51 +148,32 @@ class local_ldap extends auth_plugin_ldap {
 
             do {
                 if ($ldappagedresults) {
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        ldap_control_paged_result($ldapconnection, $this->config->pagesize, true, $ldapcookie);
-                    } else {
-                        $servercontrols = array(
-                            array(
-                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
-                                    'size' => $this->config->pagesize, 'cookie' => $ldapcookie
-                                )
+                    $servercontrols = array(
+                        array(
+                            'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
+                                'size' => $this->config->pagesize, 'cookie' => $ldapcookie
                             )
-                        );
-                    }
+                        )
+                    );
                 }
                 if ($this->config->search_sub) {
                     // Use ldap_search to find first group from subtree.
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        $ldapresult = ldap_search($ldapconnection, $context, $filter, array ($this->config->group_attribute));
-                    } else {
-                        $ldapresult = ldap_search($ldapconnection, $context, $filter, array ($this->config->group_attribute),
-                            0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
-                    }
+                    $ldapresult = ldap_search($ldapconnection, $context, $filter, array ($this->config->group_attribute),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 } else {
                     // Search only in this context.
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        $ldapresult = ldap_list($ldapconnection, $context, $filter, array ($this->config->group_attribute));
-                    } else {
-                        $ldapresult = ldap_list($ldapconnection, $context, $filter, array ($this->config->group_attribute),
-                            0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
-                    }
+                    $ldapresult = ldap_list($ldapconnection, $context, $filter, array ($this->config->group_attribute),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 }
                 $groups = ldap_get_entries($ldapconnection, $ldapresult);
 
                 if ($ldappagedresults) {
                     // Get next server cookie to know if we'll need to continue searching.
                     $ldapcookie = '';
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        $pagedresp = ldap_control_paged_result_response($ldapconnection, $ldapresult, $ldapcookie);
-                        if ($pagedresp === false) {
-                            $pagedresp = null;
-                        }
-                    } else {
-                        ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
-                            $errmsg, $referrals, $controls);
-                        if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
-                            $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
-                        }
+                    ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
+                        $errmsg, $referrals, $controls);
+                    if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
+                        $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                     }
                 }
 
@@ -555,38 +536,24 @@ class local_ldap extends auth_plugin_ldap {
 
             do {
                 if ($ldappagedresults) {
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        ldap_control_paged_result($ldapconnection, $this->config->pagesize, true, $ldapcookie);
-                    } else {
-                        $servercontrols = array(
-                            array(
-                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
-                                    'size' => $this->config->pagesize, 'cookie' => $ldapcookie
-                                )
+                    $servercontrols = array(
+                        array(
+                            'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
+                                'size' => $this->config->pagesize, 'cookie' => $ldapcookie
                             )
-                        );
-                    }
+                        )
+                    );
                 }
                 if ($this->config->search_sub) {
                     // Use ldap_search to find first user from subtree.
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        $ldapresult = ldap_search($ldapconnection, $context, $filter,
-                            array($this->config->cohort_synching_ldap_attribute_attribute));
-                    } else {
-                        $ldapresult = ldap_search($ldapconnection, $context, $filter,
-                            array($this->config->cohort_synching_ldap_attribute_attribute),
-                            0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
-                    }
+                    $ldapresult = ldap_search($ldapconnection, $context, $filter,
+                        array($this->config->cohort_synching_ldap_attribute_attribute),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 } else {
                     // Search only in this context.
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        $ldapresult = ldap_list($ldapconnection, $context, $filter,
-                            array($this->config->cohort_synching_ldap_attribute_attribute));
-                    } else {
-                        $ldapresult = ldap_list($ldapconnection, $context, $filter,
-                            array($this->config->cohort_synching_ldap_attribute_attribute),
-                            0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
-                    }
+                    $ldapresult = ldap_list($ldapconnection, $context, $filter,
+                        array($this->config->cohort_synching_ldap_attribute_attribute),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 }
 
                 if (!$ldapresult) {
@@ -596,15 +563,11 @@ class local_ldap extends auth_plugin_ldap {
                 if ($ldappagedresults) {
                     // Get next server cookie to know if we'll need to continue searching.
                     $ldapcookie = '';
-                    if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-                        ldap_control_paged_result_response($ldapconnection, $ldapresult, $ldapcookie);
-                    } else {
-                        // Get next cookie from controls.
-                        ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
-                            $errmsg, $referrals, $controls);
-                        if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
-                            $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
-                        }
+                    // Get next cookie from controls.
+                    ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
+                        $errmsg, $referrals, $controls);
+                    if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
+                        $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                     }
                 }
 
