@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v3.11.0 (February 27, 2023)
 
 - Dropped support Moodle 3.7-3.10
 - Fixed countable issues under PHP 8.0

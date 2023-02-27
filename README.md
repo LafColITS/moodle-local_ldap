@@ -7,7 +7,7 @@ This plugin synchronizes Moodle cohorts against an LDAP directory using either g
 
 Requirements
 ------------
-- Moodle 3.7 (build 2019052000 or later)
+- Moodle 3.11 (build 2021051700 or later)
 - OpenLDAP or Active Directory
 
 Installation
