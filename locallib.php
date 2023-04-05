@@ -372,9 +372,25 @@ class local_ldap extends auth_plugin_ldap {
                     $groupe = ldap_get_entries($ldapconnection, $resultg);
 
                     // A la derniere passe, AD renvoie member;Range=numero-* !!! TODO: Translate.
+
+                    // There are two possibilities why the result in the
+                    // response from AD does not contain the attribute we
+                    // requested.
+                    //
+                    //     1.  AD changed the attribute name to indicate that
+                    //         this is the last page of the result. In this
+                    //         case AD will set the higher bound of the range
+                    //         to `*`, e.g. `member;range=2000-*`.
+                    //
+                    //     2.  The group is empty, i.e. has no members at all.
                     if (empty ($groupe[0][$attribut])) {
                         $attribut = $this->config->memberattribute . ";range=" . $start . '-*';
                         $fini = true;
+                        // If also the changed attribute is not in the result
+                        // the group must be empty.
+                        if (empty($groupe[0][$attribut])) {
+                            continue;
+                        }
                     }
 
                     for ($g = 0; $g < (count($groupe[0][$attribut]) - 1); $g++) {
