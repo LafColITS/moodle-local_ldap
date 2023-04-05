@@ -1,5 +1,7 @@
 language: php
 
+dist: focal
+
 addons:
   postgresql: "13"
   apt:
@@ -27,7 +29,7 @@ env:
 
 matrix:
   include:
-    - php: 7.3
+    - php: 7.4
       env: DB=mysqli MOODLE_BRANCH=MOODLE_311_STABLE
     - php: 8.0
       env: DB=pgsql MOODLE_BRANCH=MOODLE_400_STABLE
