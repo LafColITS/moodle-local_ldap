@@ -672,7 +672,8 @@ class local_ldap_sync_testcase extends advanced_testcase {
                             )
                         );
                     }
-                    $res = ldap_search($ldapconnection, "$filter,$dn", 'cn=*', array('dn'));
+                    $res = ldap_search($ldapconnection, "$filter,$dn", 'cn=*', array('dn'),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                     if (!$res) {
                         continue;
                     }
@@ -715,7 +716,8 @@ class local_ldap_sync_testcase extends advanced_testcase {
                             )
                         );
                     }
-                    $res = ldap_search($ldapconnection, "$filter,$dn", 'ou=*', array('dn'));
+                    $res = ldap_search($ldapconnection, "$filter,$dn", 'ou=*', array('dn'),
+                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                     if (!$res) {
                         continue;
                     }

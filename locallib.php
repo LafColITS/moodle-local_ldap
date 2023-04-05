@@ -355,8 +355,12 @@ class local_ldap extends auth_plugin_ldap {
                     $groupe = ldap_get_entries($ldapconnection, $resultg);
 
                     // A la derniere passe, AD renvoie member;Range=numero-* !!! TODO: Translate.
-                    if (empty ($groupe[0][$attribut])) {
+                    if (is_countable($groupe) && empty ($groupe[0][$attribut])) {
                         $attribut = $this->config->memberattribute . ";range=" . $start . '-*';
+                        $fini = true;
+                    }
+
+                    if (!is_countable($groupe)) {
                         $fini = true;
                     } else {
                         for ($g = 0; $g < (count($groupe[0][$attribut]) - 1); $g++) {
