@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.11.1 (April 6, 2023)
+
+- Fixed AD pagination issue introduced in v3.11.0
+- Fixed issue with empty groups in AD (props [@djlauk](https://github.com/djlauk))
+
 ## v3.11.0 (February 27, 2023)
 
 - Dropped support Moodle 3.7-3.10
