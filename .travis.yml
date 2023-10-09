@@ -47,7 +47,7 @@ before_install:
   - echo 'max_input_vars=5000' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
   - phpenv config-rm xdebug.ini
   - cd ../..
-  - composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^3
+  - composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
   - export PATH="$(cd ci/bin; pwd):$(cd ci/vendor/bin; pwd):$PATH"
 
 install:
