@@ -34,8 +34,12 @@ matrix:
     - php: 8.0
       env: DB=pgsql MOODLE_BRANCH=MOODLE_400_STABLE
     - php: 8.0
-      env: DB=pgsql MOODLE_BRANCH=MOODLE_401_STABLE
-    - php: 8.0
+      env: DB=mysqli MOODLE_BRANCH=MOODLE_401_STABLE
+    - php: 8.1
+      env: DB=pgsql MOODLE_BRANCH=MOODLE_402_STABLE
+    - php: 8.2
+      env: DB=mysqli MOODLE_BRANCH=MOODLE_403_STABLE
+    - php: 8.2
       env: DB=pgsql MOODLE_BRANCH=master
 
 before_install:
