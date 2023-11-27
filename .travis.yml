@@ -10,6 +10,7 @@ addons:
       - slapd
       - postgresql-13
       - postgresql-client-13
+      - libonig5
 
 services:
   - mysql
@@ -40,7 +41,7 @@ matrix:
     - php: 8.2
       env: DB=mysqli MOODLE_BRANCH=MOODLE_403_STABLE
     - php: 8.2
-      env: DB=pgsql MOODLE_BRANCH=master
+      env: DB=pgsql MOODLE_BRANCH=main
 
 before_install:
   - if [[ ${TRAVIS_PHP_VERSION:0:1} -gt 7 ]]; then pecl install xmlrpc-beta; fi
