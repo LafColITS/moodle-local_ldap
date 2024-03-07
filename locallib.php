@@ -273,7 +273,7 @@ class local_ldap extends auth_plugin_ldap {
                                             }
                                             $this->antirecursionarray[$memberstring] = 1;
                                             $tmp = $this->ldap_get_group_members_rfc($groupcn);
-                                            if (!$tmp) {
+                                            if (!is_array($tmp)) {
                                                 return false;
                                             }
                                             unset($this->antirecursionarray[$memberstring]);
@@ -390,7 +390,7 @@ class local_ldap extends auth_plugin_ldap {
 
                                     $this->antirecursionarray[$memberstring] = 1;
                                     $tmp = $this->ldap_get_group_members_ad($groupcn);
-                                    if (!$tmp) {
+                                    if (!is_array($tmp)) {
                                         return false;
                                     }
                                     unset($this->antirecursionarray[$memberstring]);
