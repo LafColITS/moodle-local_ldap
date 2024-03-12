@@ -1,5 +1,0 @@
-dn:dc=example,dc=com
-objectClass:dcObject
-objectClass:organizationalUnit
-dc:example
-ou:foo
