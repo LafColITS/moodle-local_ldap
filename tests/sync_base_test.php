@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->dirroot.'/local/ldap/locallib.php');
-require_once($CFG->dirroot.'/auth/ldap/tests/plugin_test.php');
+require_once($CFG->dirroot.'/auth/ldap/tests/auth_ldap_test.php');
 require_once($CFG->dirroot.'/auth/ldap/auth.php');
 require_once($CFG->libdir.'/ldaplib.php');
 
