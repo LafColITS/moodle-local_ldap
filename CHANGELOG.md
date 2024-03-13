@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## v4.1.0 (March 13, 2024)
 
 - Migrate CI builds to Github Actions
 - Code cleanup
+- Fixed issue with empty nested groups (props [#@AdamosD7](https://github.com/AdamosD7))
+- Dropped support for Moodle 3.11-4.0
 
 ## v3.11.1 (April 6, 2023)
 
@@ -12,7 +14,7 @@
 
 ## v3.11.0 (February 27, 2023)
 
-- Dropped support Moodle 3.7-3.10
+- Dropped support for Moodle 3.7-3.10
 - Fixed countable issues under PHP 8.0
 - Rebuilt pagination to remove pre-PHP 7.3 support
 
