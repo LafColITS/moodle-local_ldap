@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v4.4.0 (April 24,2024)
 
 - Dropped support for Moodle 4.1-4.3
+- Added support for Moodle 4.4
 
 ## v4.1.0 (March 13, 2024)
 
