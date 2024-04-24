@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Dropped support for Moodle 4.1-4.3
+
 ## v4.1.0 (March 13, 2024)
 
 - Migrate CI builds to Github Actions
