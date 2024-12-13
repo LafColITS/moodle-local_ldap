@@ -21,7 +21,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        image: postgres:14
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -52,6 +52,9 @@ jobs:
         php: ['8.1', '8.2', '8.3']
         moodle-branch: ['MOODLE_404_STABLE', 'MOODLE_405_STABLE', 'main']
         database: [pgsql, mariadb]
+        exclude:
+          - {moodle-branch: 'main', php: '8.1', database: 'pgsql'}
+          - {moodle-branch: 'main', php: '8.1', database: 'mariadb'}
 
     steps:
       - name: Check out repository code
