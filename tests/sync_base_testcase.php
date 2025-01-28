@@ -45,7 +45,7 @@ if (!defined('TEST_AUTH_LDAP_USER_TYPE')) {
  * @copyright 2016 Lafayette College ITS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class sync_base_test extends \advanced_testcase {
+abstract class sync_base_testcase extends \advanced_testcase {
 
     public function test_cohort_group_sync() {
         global $CFG, $DB;

@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot.'/local/ldap/tests/sync_base_test.php');
+require_once($CFG->dirroot.'/local/ldap/tests/sync_base_testcase.php');
 
 /**
  * PHPUnit tests for local_ldap and OpenLDAP.
@@ -39,7 +39,7 @@ require_once($CFG->dirroot.'/local/ldap/tests/sync_base_test.php');
  * @copyright 2024 Lafayette College ITS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class sync_rfc2307_test extends sync_base_test {
+class sync_rfc2307_test extends sync_base_testcase {
 
     /**
      * Get the LDAP user type.
