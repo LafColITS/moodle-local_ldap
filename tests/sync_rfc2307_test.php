@@ -39,7 +39,7 @@ require_once($CFG->dirroot.'/local/ldap/tests/sync_base_testcase.php');
  * @copyright 2024 Lafayette College ITS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class sync_rfc2307_test extends sync_base_testcase {
+final class sync_rfc2307_test extends sync_base_testcase {
 
     /**
      * Get the LDAP user type.
@@ -83,8 +83,8 @@ class sync_rfc2307_test extends sync_base_testcase {
      * @return array The test container OU.
      */
     protected function get_ldap_test_ou(): array {
-        $o = array();
-        $o['objectClass'] = array('dcObject', 'organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['dcObject', 'organizationalUnit'];
         $o['dc'] = 'moodletest';
         $o['ou'] = 'MOODLETEST';
         return $o;

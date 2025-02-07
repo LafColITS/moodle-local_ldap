@@ -100,7 +100,7 @@ class local_ldap extends auth_plugin_ldap {
      * @param unknown_type $key
      * @param unknown_type $default
      */
-    private function merge_config ($from, $key, $default) {
+    private function merge_config($from, $key, $default) {
         if (!empty($from->$key)) {
             $this->config->$key = $from->$key;
         } else {
