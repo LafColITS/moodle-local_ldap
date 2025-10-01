@@ -23,30 +23,47 @@
  */
 
 $string['attributesynctask'] = 'Synchronize cohorts from LDAP attributes';
-$string['cohort_synching_ldap_attribute_attribute'] = 'Attribute name to search';
 $string['cohort_synching_ldap_attribute_attribute_desc'] = 'Adjust to the LDAP user\'s attribute to search for (respect case)';
-$string['cohort_synching_ldap_attribute_autocreate_cohorts'] = 'Autocreate missing cohorts';
+$string['cohort_synching_ldap_attribute_attribute'] = 'Attribute name to search';
 $string['cohort_synching_ldap_attribute_autocreate_cohorts_desc'] = 'If selected will create missing cohorts automatically';
-$string['cohort_synching_ldap_attribute_idnumbers'] = 'Target cohorts idnumbers';
+$string['cohort_synching_ldap_attribute_autocreate_cohorts'] = 'Autocreate missing cohorts';
 $string['cohort_synching_ldap_attribute_idnumbers_desc'] = 'A comma-separated list of target cohort idnumbers; if missing all distinct values of the attribute will produce a synced cohort';
-$string['cohort_synching_ldap_attribute_objectclass'] = 'User class';
+$string['cohort_synching_ldap_attribute_idnumbers'] = 'Target cohorts idnumbers';
 $string['cohort_synching_ldap_attribute_objectclass_desc'] = 'Use to override default value inherited from LDAP or CAS auth plugin (respect case)';
-$string['cohort_synching_ldap_groups_autocreate_cohorts'] = 'Autocreate missing cohorts';
+$string['cohort_synching_ldap_attribute_objectclass'] = 'User class';
 $string['cohort_synching_ldap_groups_autocreate_cohorts_desc'] = 'If selected will create missing cohorts automatically';
+$string['cohort_synching_ldap_groups_autocreate_cohorts'] = 'Autocreate missing cohorts';
 $string['cohort_synchronized_with_attribute'] = 'Cohort synchronized with LDAP attribute {$a}';
 $string['cohort_synchronized_with_group'] = 'Cohort synchronized with LDAP group {$a}';
-$string['group_attribute'] = 'Group attribute';
 $string['group_attribute_desc'] = 'Naming attribute of your LDAP groups, usually cn ';
-$string['group_class'] = 'Group class';
+$string['group_attribute'] = 'Group attribute';
+//#<-
+$string['cohort_synching_ldap_groups_create_cohort_name_by_attribute'] = 'Cohort_synching_ldap_groups_create_cohort_name_by_attribute';
+$string['cohort_synching_ldap_groups_create_cohort_name_by_attribute_desc'] = 'Use personalized group attribute for naming cohorts';
+$string['group_attribute_description'] = 'Group attribute description';
+$string['group_attribute_description_desc'] = 'Ldap group attribute from where retrieving cohort name';
+$string['group_filter'] = 'Group filter';
+$string['group_filter_desc'] = 'Reduce your resultset by applying a group filter';
+$string['group_use_advanced_ldap_filter'] = 'Use an advanced ldap group filter';
+$string['group_use_advanced_ldap_filter_desc'] = 'Whole ldap group filter';
+$string['group_advanced_filter'] = 'Advanced ldap group filter';
+$string['group_advanced_filter_desc'] = 'Custom ldap group filter (rfc2254) ex:(cn=*)';
+$string['group_contexts'] = 'Group contexts';
+$string['group_contexts_desc'] = 'Ldap contexts where retrieving groups';
+$string['cohort_name_suffix'] = 'Cohort name suffix';
+$string['cohort_name_suffix_desc'] = 'To identify cohorts created with this plugin (Useful for not deleting manuals cohorts)';
+$string['cohortsdeltask'] = 'Delete cohorts from non existing LDAP groups';
+//#->
 $string['group_class_desc'] = 'Set if your groups are of another class such as group, groupOfNames...';
+$string['group_class'] = 'Group class';
 $string['groupsynctask'] = 'Synchronize cohorts from LDAP groups';
 $string['pluginname'] = 'LDAP syncing scripts';
 $string['privacy:metadata'] = 'The LDAP syncing scripts do not store any data.';
-$string['process_nested_groups'] = 'Process nested groups';
 $string['process_nested_groups_desc'] = 'If selected, LDAP groups included in groups will be processed';
-$string['real_user_attribute'] = 'Real user class';
+$string['process_nested_groups'] = 'Process nested groups';
 $string['real_user_attribute_desc'] = 'Use if your user_attribute is in mixed case in LDAP (sAMAccountName), but not in Moodle\'s CAS/LDAP settings';
-$string['synccohortattribute'] = 'Sync Moodle\'s cohorts with LDAP attribute';
+$string['real_user_attribute'] = 'Real user class';
 $string['synccohortattribute_info'] = '';
-$string['synccohortgroup'] = 'Sync Moodle\'s cohorts with LDAP groups';
+$string['synccohortattribute'] = 'Sync Moodle\'s cohorts with LDAP attribute';
 $string['synccohortgroup_info'] = '';
+$string['synccohortgroup'] = 'Sync Moodle\'s cohorts with LDAP groups';

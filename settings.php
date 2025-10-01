@@ -42,6 +42,50 @@ if ($hassiteconfig) {
     $description = get_string($name.'_desc', 'local_ldap');
     $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, 'groupOfNames');
     $settings->add($setting);
+	
+	//#<-
+	$name = 'cohort_synching_ldap_groups_create_cohort_name_by_attribute';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configcheckbox('local_ldap/'.$name, $title, $description, true);
+    $settings->add($setting);
+	
+	$name = 'group_attribute_description';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, 'description');
+    $settings->add($setting);
+		
+	$name = 'group_use_advanced_ldap_filter';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configcheckbox('local_ldap/'.$name, $title, $description, false);
+    $settings->add($setting);
+	
+	$name = 'group_advanced_filter';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, '');
+    $settings->add($setting);
+	
+	$name = 'group_filter';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, '*');
+    $settings->add($setting);
+	
+	$name = 'group_contexts';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, '');
+    $settings->add($setting);
+
+    $name = 'cohort_name_suffix';
+    $title = get_string($name, 'local_ldap');
+    $description = get_string($name.'_desc', 'local_ldap');
+    $setting = new admin_setting_configtext('local_ldap/'.$name, $title, $description, '_MDL');
+    $settings->add($setting);
+	//#->
 
     $name = 'real_user_attribute';
     $title = get_string($name, 'local_ldap');

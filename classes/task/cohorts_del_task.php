@@ -15,46 +15,45 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Task definitions for local_ldap.
+ * Scheduled task to sync cohorts based on group membership.
  *
  * @package   local_ldap
- * @category  task
  * @copyright 2016 Lafayette College ITS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+//#<-
+namespace local_ldap\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-//# Ajout cohorts_del_task
-$tasks = [
-    [
-        'classname' => 'local_ldap\task\attribute_sync_task',
-        'blocking' => 0,
-        'minute' => '0',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-        'disabled' => 1,
-    ],
-    [
-        'classname' => 'local_ldap\task\group_sync_task',
-        'blocking' => 0,
-        'minute' => '0',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-        'disabled' => 1,
-    ],
-	[
-        'classname' => 'local_ldap\task\cohorts_del_task',
-        'blocking' => 0,
-        'minute' => '0',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-        'disabled' => 1,
-    ],
-];
+require_once($CFG->dirroot.'/local/ldap/locallib.php');
+
+/**
+ * Scheduled task to sync cohorts based on group membership.
+ *
+ * @package   local_ldap
+ * @copyright 2016 Lafayette College ITS
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class cohorts_del_task extends \core\task\scheduled_task {
+    /**
+     * Get the name of the task.
+     *
+     * @return string the name of the task
+     */
+    public function get_name() {
+         return get_string('cohortsdeltask', 'local_ldap');
+    }
+
+    /**
+     * Execute the task.
+     *
+     * @see local_ldap::del_cohorts_by_missing_group()
+     */
+    public function execute() {
+        if ($plugin = new \local_ldap()) {
+            $plugin->del_cohorts_by_missing_group();
+        }
+    }
+}
+//#->
