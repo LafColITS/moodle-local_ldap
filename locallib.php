@@ -68,6 +68,15 @@ class local_ldap extends auth_plugin_ldap {
         $extra = get_config('local_ldap');
         $this->merge_config($extra, 'group_attribute', 'cn');
         $this->merge_config($extra, 'group_class', 'groupOfNames');
+		//#<-
+		$this->merge_config($extra, 'cohort_synching_ldap_groups_create_cohort_name_by_attribute',true);
+		$this->merge_config($extra, 'group_attribute_description', 'description');
+		$this->merge_config($extra, 'group_filter', '*');
+		$this->merge_config($extra, 'group_use_advanced_ldap_filter', false);
+		$this->merge_config($extra, 'group_advanced_filter', '');
+	    $this->merge_config($extra, 'group_contexts', '');
+        $this->merge_config($extra, 'cohort_name_suffix', '_MDL');
+		//#->
         $this->merge_config($extra, 'process_nested_groups', 0);
         $this->merge_config($extra, 'cohort_synching_ldap_attribute_attribute', 'eduPersonAffiliation');
         $this->merge_config($extra, 'cohort_synching_ldap_attribute_idnumbers', '');
@@ -100,7 +109,7 @@ class local_ldap extends auth_plugin_ldap {
      * @param unknown_type $key
      * @param unknown_type $default
      */
-    private function merge_config($from, $key, $default) {
+    private function merge_config ($from, $key, $default) {
         if (!empty($from->$key)) {
             $this->config->$key = $from->$key;
         } else {
@@ -122,17 +131,38 @@ class local_ldap extends auth_plugin_ldap {
         $fresult = [];
 
         $servercontrols = [];
-
-        if ($filter == "*") {
-            $filter = "(&(" . $this->config->group_attribute . "=*)(objectclass=" . $this->config->group_class . "))";
-        }
-
-        if (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
+		
+		//<--# Add filter option for groups
+		$pattern_regex = "/^(\s*\((?:[&|](?1)+|(?:!(?1))|[a-zA-Z][a-zA-Z0-9-]*[<>~]?=[^()]*)\s*\)\s*)$/i";
+		
+		//#Use advanced filter
+		if (!empty($this->config->group_use_advanced_ldap_filter)){
+			if (!empty($this->config->group_advanced_filter) && preg_match($pattern_regex,$this->config->group_advanced_filter)){
+				$filter = "(&". $this->config->group_advanced_filter . "(objectclass=" . $this->config->group_class . "))";
+			}else{
+				return $fresult;
+			}
+		}
+		//#Use simple filter
+		if (empty($this->config->group_use_advanced_ldap_filter) && !empty($this->config->group_filter)){ 
+			$filter = $this->config->group_filter;
+			if ($filter == "*") {
+				$filter = "(&(" . $this->config->group_attribute . "=*)(objectclass=" . $this->config->group_class . "))";
+			} else {
+				$filter = "(&(" . $this->config->group_attribute . "=" . $filter . ")(objectclass=" . $this->config->group_class . "))";
+			}
+		}
+        //# add regex filter check /^(\s*\((?:[&|](?1)+|(?:!(?1))|[a-zA-Z][a-zA-Z0-9-]*[<>~]?=[^()]*)\s*\)\s*)$/
+		//# Add Ldap context(s) from config plugin
+		if (!empty($this->config->group_contexts)) {
+			$contexts = explode(';', $this->config->group_contexts);
+		}
+		  elseif (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
             $contexts = explode(';', $CFG->cohort_synching_ldap_groups_contexts);
         } else {
             $contexts = explode(';', $this->config->contexts);
         }
-
+		//#->
         if (!empty ($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
         }
@@ -156,15 +186,17 @@ class local_ldap extends auth_plugin_ldap {
                         ],
                     ];
                 }
+				//#<- add group's attribute description in resultset
                 if ($this->config->search_sub) {
-                    // Use ldap_search to find first group from subtree.
-                    $ldapresult = ldap_search($ldapconnection, $context, $filter, [$this->config->group_attribute],
+                    //# Use ldap_search to find first group from subtree.
+                    $ldapresult = ldap_search($ldapconnection, $context, $filter, [$this->config->group_attribute, $this->config->group_attribute_description],
                         0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 } else {
-                    // Search only in this context.
-                    $ldapresult = ldap_list($ldapconnection, $context, $filter, [$this->config->group_attribute],
+                    //# Search only in this context.
+                    $ldapresult = ldap_list($ldapconnection, $context, $filter, [$this->config->group_attribute, $this->config->group_attribute_description],
                         0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
                 }
+				//#->
                 $groups = ldap_get_entries($ldapconnection, $ldapresult);
 
                 if ($ldappagedresults) {
@@ -180,13 +212,16 @@ class local_ldap extends auth_plugin_ldap {
                 // Add found groups to list.
                 for ($i = 0; $i < count($groups) - 1; $i++) {
                     $groupcn = $groups[$i][$this->config->group_attribute][0];
-                    array_push($fresult, ($groupcn));
+					//#<- 
+					$groupdescription = trim($groups[$i][$this->config->group_attribute_description][0]);
+                    array_push($fresult, [$groupcn, $groupdescription]);
 
                     // Keep the dn/cn in cache for processing.
                     if ($this->config->process_nested_groups) {
                         $groupdn = $groups[$i]['dn'];
                         $this->groupdnscache[$groupdn] = $groupcn;
                     }
+					//#->
                 }
             } while ($ldappagedresults && $ldapcookie !== null && $ldapcookie != '');
         }
@@ -214,11 +249,16 @@ class local_ldap extends auth_plugin_ldap {
 
         $queryg = "(&({$this->config->group_attribute}=" . ldap_filter_addslashes(trim($group)) . ")(objectClass={$this->config->group_class}))";
 
-        if (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
+        //#<-
+		if (!empty($this->config->group_contexts)) {
+			$contexts = explode(';', $this->config->group_contexts);
+		}
+		  elseif (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
             $contexts = explode(';', $CFG->cohort_synching_ldap_groups_contexts);
         } else {
             $contexts = explode(';', $this->config->contexts);
         }
+		//#->
 
         if (!empty ($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
@@ -273,7 +313,7 @@ class local_ldap extends auth_plugin_ldap {
                                             }
                                             $this->antirecursionarray[$memberstring] = 1;
                                             $tmp = $this->ldap_get_group_members_rfc($groupcn);
-                                            if (!is_array($tmp)) {
+                                            if (!$tmp) {
                                                 return false;
                                             }
                                             unset($this->antirecursionarray[$memberstring]);
@@ -321,11 +361,16 @@ class local_ldap extends auth_plugin_ldap {
 
         $size = 999;
 
-        if (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
+        //#<-
+		if (!empty($this->config->group_contexts)) {
+			$contexts = explode(';', $this->config->group_contexts);
+		}
+		  elseif (!empty($CFG->cohort_synching_ldap_groups_contexts)) {
             $contexts = explode(';', $CFG->cohort_synching_ldap_groups_contexts);
         } else {
             $contexts = explode(';', $this->config->contexts);
         }
+		//#->
 
         if (!empty ($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
@@ -390,7 +435,7 @@ class local_ldap extends auth_plugin_ldap {
 
                                     $this->antirecursionarray[$memberstring] = 1;
                                     $tmp = $this->ldap_get_group_members_ad($groupcn);
-                                    if (!is_array($tmp)) {
+                                    if (!$tmp) {
                                         return false;
                                     }
                                     unset($this->antirecursionarray[$memberstring]);
@@ -648,7 +693,6 @@ class local_ldap extends auth_plugin_ldap {
 
         return $ret;
     }
-
     /**
      * Get the members of a given cohort.
      *
@@ -740,29 +784,43 @@ class local_ldap extends auth_plugin_ldap {
      * @see \local_ldap\task\group_sync_task\execute()
      * @return bool always returns true.
      */
-    public function sync_cohorts_by_group() {
+    public function sync_cohorts_by_group() { 
         global $DB;
 
         $ldapgroups = $this->ldap_get_grouplist();
+				
         foreach ($ldapgroups as $groupname) {
-            if (!$cohort = $DB->get_record('cohort', ['idnumber' => $groupname], '*')) {
+				
+			if (!$cohort = $DB->get_record('cohort', ['idnumber' => $groupname[0]], '*')) {
                 if (empty($this->config->cohort_synching_ldap_groups_autocreate_cohorts)) {
                     // The cohort does not exist and auto-creation of cohorts is disabled.
                     continue;
                 }
-                $ldapmembers = $this->ldap_get_group_members($groupname);
+                $ldapmembers = $this->ldap_get_group_members($groupname[0]);
                 if (!is_countable($ldapmembers) || count($ldapmembers) == 0) {
                     // Do not create an empty cohort.
                     continue;
                 }
                 $cohort = new stdClass();
-                $cohort->name = $cohort->idnumber = $groupname;
+				//#<- Use group description attribute for cohort name if selected option in config plugin
+
+				$cohort->idnumber = $groupname[0]; //#cohort id = group cn
+				
+								
+				if (!empty($this->config->group_attribute_description) and !empty($this->config->cohort_synching_ldap_groups_create_cohort_name_by_attribute)) {
+					//#cohort name = group description
+					$cohort->name = $groupname[1].$this->config->cohort_name_suffix;
+				}else{
+					//#cohort name = group cn
+					$cohort->name = $groupname[0].$this->config->cohort_name_suffix;
+				}
+				//#->
                 $cohort->contextid = context_system::instance()->id;
-                $cohort->description = get_string('cohort_synchronized_with_group', 'local_ldap', $groupname);
+                $cohort->description = get_string('cohort_synchronized_with_group', 'local_ldap', $groupname[0]);
                 $cohortid = cohort_add_cohort($cohort);
             } else {
                 $cohortid = $cohort->id;
-                $ldapmembers = $this->ldap_get_group_members($groupname);
+                $ldapmembers = $this->ldap_get_group_members($groupname[0]);
             }
 
             // Update existing membership.
@@ -788,4 +846,73 @@ class local_ldap extends auth_plugin_ldap {
         }
         return true;
     }
+	 /**
+     * Delete cohorts by LDAP missing group .
+     *
+     * @see \local_ldap\task\cohorts_del_task\execute()
+     * @return bool always returns true.
+     */
+	public function del_cohorts_by_missing_group() {
+        global $DB;
+		
+		$is_ldapgroups_empty = false;
+		$ldapgroups = $this->ldap_get_grouplist();
+		
+		if (!is_countable($ldapgroups) || count($ldapgroups) == 0) {
+			$is_ldapgroups_empty = true;
+        }		
+				
+		//# Optimisation : Convertir la liste des groupes LDAP en `array_flip()` pour une recherche plus rapide
+		$ldap_groups_map = array_flip(array_column($ldapgroups, 0));//PE
+		
+		
+		//# Suppression des cohortes par lots avec pagination
+		$context = context_system::instance();
+		$page = 0;
+		$perpage = 1000; //# Récupération par lots de 1000 cohortes
+		$deleted_count = 0;
+		$total_processed = 0;
+
+		$pattern = $this->config->cohort_name_suffix;
+		$pattern_regex = "/^.*".$pattern."$/i";
+			
+		
+		do {
+		//# Récupération d'un lot de cohortes (on récupère tout car on filtre ensuite)
+		
+		$cohort_data = cohort_get_all_cohorts(0, $perpage, $pattern);
+		$cohorts = $cohort_data['cohorts']; //# Liste des cohortes
+		$total_cohorts = $cohort_data['totalcohorts']; //# Nombre total de cohortes
+			
+					
+		$page++;
+
+		if (empty($cohorts)) {
+			break; //# Plus de cohortes à traiter
+		}
+
+		foreach ($cohorts as $cohort) {
+			//# Vérifier qu'il s'agisse d'une cohorte automatique (suffixée)
+			if (!preg_match($pattern_regex, $cohort->name)) {
+				continue; // Si la cohorte ne correspond pas au filtre, on l'ignore
+			}
+			$total_processed++;
+
+			//# Vérifier si la cohorte existe dans LDAP
+			if ($is_ldapgroups_empty or !isset($ldap_groups_map[$cohort->idnumber])) {
+				cohort_delete_cohort($cohort);
+				$deleted_count++;
+			}
+		}
+
+		//# Évite de surcharger la base de données
+		usleep(500000); //# Pause de 0.5 seconde entre les lots
+
+		} while (count($cohorts) === $perpage); //# Continue tant qu'on récupère un nombre complet de cohortes
+
+		echo "Total des cohortes filtrées : $total_processed\n";
+		echo "Total des cohortes supprimées : $deleted_count\n";
+
+		return true;
+	}
 }

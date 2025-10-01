@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+//# Ajout cohorts_del_task
 $tasks = [
     [
         'classname' => 'local_ldap\task\attribute_sync_task',
@@ -38,6 +39,16 @@ $tasks = [
     ],
     [
         'classname' => 'local_ldap\task\group_sync_task',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+        'disabled' => 1,
+    ],
+	[
+        'classname' => 'local_ldap\task\cohorts_del_task',
         'blocking' => 0,
         'minute' => '0',
         'hour' => '*',
