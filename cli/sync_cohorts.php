@@ -24,14 +24,14 @@
 
 define('CLI_SCRIPT', true);
 
-require(__DIR__.'/../../../config.php'); // Global moodle config file.
-require_once($CFG->dirroot.'/local/ldap/locallib.php');
-require_once($CFG->libdir.'/clilib.php');
+require(__DIR__ . '/../../../config.php'); // Global moodle config file.
+require_once($CFG->dirroot . '/local/ldap/locallib.php');
+require_once($CFG->libdir . '/clilib.php');
 
 // Ensure errors are well explained.
 set_debugging(DEBUG_DEVELOPER, true);
 
-if ( !is_enabled_auth('cas') && !is_enabled_auth('ldap')) {
+if (!is_enabled_auth('cas') && !is_enabled_auth('ldap')) {
     cli_problem('[LOCAL LDAP] ' . get_string('pluginnotenabled', 'auth_ldap'));
     die;
 }

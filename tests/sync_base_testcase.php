@@ -28,10 +28,10 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot.'/local/ldap/locallib.php');
-require_once($CFG->dirroot.'/auth/ldap/tests/auth_ldap_test.php');
-require_once($CFG->dirroot.'/auth/ldap/auth.php');
-require_once($CFG->libdir.'/ldaplib.php');
+require_once($CFG->dirroot . '/local/ldap/locallib.php');
+require_once($CFG->dirroot . '/auth/ldap/tests/auth_ldap_test.php');
+require_once($CFG->dirroot . '/auth/ldap/auth.php');
+require_once($CFG->libdir . '/ldaplib.php');
 
 // Detect server type; we assume rfc2307.
 if (!defined('TEST_AUTH_LDAP_USER_TYPE')) {
@@ -46,7 +46,9 @@ if (!defined('TEST_AUTH_LDAP_USER_TYPE')) {
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class sync_base_testcase extends \advanced_testcase {
-
+    /** 
+     * Test cohort synchronization based on LDAP groups.
+     */
     public function test_cohort_group_sync() {
         global $CFG, $DB;
 
@@ -68,48 +70,48 @@ abstract class sync_base_testcase extends \advanced_testcase {
         }
 
         // Create 2000 users.
-        $o = array();
-        $o['objectClass'] = array('organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['organizationalUnit'];
         $o['ou']          = 'users';
-        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
+        ldap_add($connection, 'ou=' . $o['ou'] . ',' . $topdn, $o);
         for ($i = 1; $i <= 2000; $i++) {
             $this->create_ldap_user($connection, $topdn, $i);
         }
 
         // Create department groups.
-        $o = array();
-        $o['objectClass'] = array('organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['organizationalUnit'];
         $o['ou']          = 'groups';
-        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
-        $departments = array('english', 'history', 'english(bis)');
+        ldap_add($connection, 'ou=' . $o['ou'] . ',' . $topdn, $o);
+        $departments = ['english', 'history', 'english(bis)'];
         foreach ($departments as $department) {
-            $o = array();
-            $o['objectClass'] = array('groupOfNames');
+            $o = [];
+            $o['objectClass'] = ['groupOfNames'];
             $o['cn']          = $department;
-            $o['member']      = array('cn=username1,ou=users,'.$topdn, 'cn=username2,ou=users,'.$topdn,
-                    'cn=username5,ou=users,'.$topdn);
-            ldap_add($connection, 'cn='.$o['cn'].',ou=groups,'.$topdn, $o);
+            $o['member']      = ['cn=username1,ou=users,' . $topdn, 'cn=username2,ou=users,' . $topdn,
+                    'cn=username5,ou=users,' . $topdn];
+            ldap_add($connection, 'cn=' . $o['cn'] . ',ou=groups,' . $topdn, $o);
         }
 
         // Create a bunch of empty groups to simulate a large deployment.
         for ($i = 1; $i <= 2000; $i++) {
             $u = rand(1, 2000);
-            $o = array();
-            $o['objectClass'] = array('groupOfNames');
+            $o = [];
+            $o['objectClass'] = ['groupOfNames'];
             $o['cn']          = "emptygroup{$i}";
-            $o['member']      = array("cn=username{$u},ou=users,".$topdn);
-            ldap_add($connection, 'cn='.$o['cn'].',ou=groups,'.$topdn, $o);
+            $o['member']      = ["cn=username{$u},ou=users," . $topdn];
+            ldap_add($connection, 'cn=' . $o['cn'] . ',ou=groups,' . $topdn, $o);
         }
 
         // Create all employees group.
-        $o = array();
-        $o['objectClass'] = array('groupOfNames');
+        $o = [];
+        $o['objectClass'] = ['groupOfNames'];
         $o['cn']          = 'allemployees';
-        $o['member']      = array();
+        $o['member']      = [];
         for ($i = 1; $i <= 2000; $i++) {
             $o['member'][] = "cn=username{$i},ou=users,{$topdn}";
         }
-        ldap_add($connection, 'cn='.$o['cn'].',ou=groups,'.$topdn, $o);
+        ldap_add($connection, 'cn=' . $o['cn'] . ',ou=groups,' . $topdn, $o);
 
         // Configure the authentication plugin a bit.
         set_config('host_url', TEST_AUTH_LDAP_HOST_URL, 'auth_ldap');
@@ -120,7 +122,7 @@ abstract class sync_base_testcase extends \advanced_testcase {
         set_config('bind_dn', TEST_AUTH_LDAP_BIND_DN, 'auth_ldap');
         set_config('bind_pw', TEST_AUTH_LDAP_BIND_PW, 'auth_ldap');
         set_config('user_type', TEST_AUTH_LDAP_USER_TYPE, 'auth_ldap');
-        set_config('contexts', 'ou=users,'.$topdn.';ou=groups,'.$topdn, 'auth_ldap');
+        set_config('contexts', 'ou=users,' . $topdn . ';ou=groups,' . $topdn, 'auth_ldap');
         set_config('search_sub', 0, 'auth_ldap');
         set_config('opt_deref', LDAP_DEREF_NEVER, 'auth_ldap');
         set_config('user_attribute', 'cn', 'auth_ldap');
@@ -180,20 +182,20 @@ abstract class sync_base_testcase extends \advanced_testcase {
 
         // All three cohorts should have three members.
         $plugin->sync_cohorts_by_group();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $historyid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $historyid]);
         $this->assertEquals(3, $members);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(3, $members);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishbisid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishbisid]);
         $this->assertEquals(3, $members);
 
         // Remove a user and then ensure he's re-added.
         $members = $plugin->get_cohort_members($englishid);
         cohort_remove_member($englishid, current($members)->id);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(2, $members);
         $plugin->sync_cohorts_by_group();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(3, $members);
 
         // Add the big cohort.
@@ -205,31 +207,40 @@ abstract class sync_base_testcase extends \advanced_testcase {
 
         // The big cohort should have 2000 members.
         $plugin->sync_cohorts_by_group();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $allemployeesid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $allemployeesid]);
         $this->assertEquals(2000, $members);
 
         // Add a user to a group in LDAP and ensure he'd added.
-        ldap_mod_add($connection, "cn=history,ou=groups,$topdn",
-            array($auth->config->memberattribute => "cn=username3,ou=users,$topdn"));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $historyid));
+        ldap_mod_add(
+            $connection,
+            "cn=history,ou=groups,$topdn",
+            [$auth->config->memberattribute => "cn=username3,ou=users,$topdn"]
+        );
+        $members = $DB->count_records('cohort_members', ['cohortid' => $historyid]);
         $this->assertEquals(3, $members);
         $plugin->sync_cohorts_by_group();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $historyid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $historyid]);
         $this->assertEquals(4, $members);
 
         // Remove a user from a group in LDAP and ensure he's deleted.
-        ldap_mod_del($connection, "cn=english,ou=groups,$topdn",
-            array($auth->config->memberattribute => "cn=username2,ou=users,$topdn"));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        ldap_mod_del(
+            $connection,
+            "cn=english,ou=groups,$topdn",
+            [$auth->config->memberattribute => "cn=username2,ou=users,$topdn"]
+        );
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(3, $members);
         $plugin->sync_cohorts_by_group();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(2, $members);
 
         // Cleanup.
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
     }
 
+    /** 
+     * Test automatic cohort creation based on LDAP groups.
+     */
     public function test_cohort_autocreation() {
         global $CFG, $DB;
 
@@ -251,27 +262,27 @@ abstract class sync_base_testcase extends \advanced_testcase {
         }
 
         // Create 5 users.
-        $o = array();
-        $o['objectClass'] = array('organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['organizationalUnit'];
         $o['ou']          = 'users';
-        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
+        ldap_add($connection, 'ou=' . $o['ou'] . ',' . $topdn, $o);
         for ($i = 1; $i <= 5; $i++) {
             $this->create_ldap_user($connection, $topdn, $i);
         }
 
         // Create department groups.
-        $o = array();
-        $o['objectClass'] = array('organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['organizationalUnit'];
         $o['ou']          = 'groups';
-        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
-        $departments = array('english', 'history', 'english(bis)');
+        ldap_add($connection, 'ou=' . $o['ou'] . ',' . $topdn, $o);
+        $departments = ['english', 'history', 'english(bis)'];
         foreach ($departments as $department) {
-            $o = array();
-            $o['objectClass'] = array('groupOfNames');
+            $o = [];
+            $o['objectClass'] = ['groupOfNames'];
             $o['cn']          = $department;
-            $o['member']      = array('cn=username1,ou=users,'.$topdn, 'cn=username2,ou=users,'.$topdn,
-                    'cn=username5,ou=users,'.$topdn);
-            ldap_add($connection, 'cn='.$o['cn'].',ou=groups,'.$topdn, $o);
+            $o['member']      = ['cn=username1,ou=users,' . $topdn, 'cn=username2,ou=users,' . $topdn,
+                    'cn=username5,ou=users,' . $topdn];
+            ldap_add($connection, 'cn=' . $o['cn'] . ',ou=groups,' . $topdn, $o);
         }
 
         // Configure the authentication plugin a bit.
@@ -283,7 +294,7 @@ abstract class sync_base_testcase extends \advanced_testcase {
         set_config('bind_dn', TEST_AUTH_LDAP_BIND_DN, 'auth_ldap');
         set_config('bind_pw', TEST_AUTH_LDAP_BIND_PW, 'auth_ldap');
         set_config('user_type', TEST_AUTH_LDAP_USER_TYPE, 'auth_ldap');
-        set_config('contexts', 'ou=users,'.$topdn.';ou=groups,'.$topdn, 'auth_ldap');
+        set_config('contexts', 'ou=users,' . $topdn . ';ou=groups,' . $topdn, 'auth_ldap');
         set_config('search_sub', 0, 'auth_ldap');
         set_config('opt_deref', LDAP_DEREF_NEVER, 'auth_ldap');
         set_config('user_attribute', 'cn', 'auth_ldap');
@@ -327,14 +338,14 @@ abstract class sync_base_testcase extends \advanced_testcase {
 
         // All three cohorts should be created and have 3 members.
         $plugin->sync_cohorts_by_group();
-        $historyid = $DB->get_field('cohort', 'id', array('name' => 'history'));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $historyid));
+        $historyid = $DB->get_field('cohort', 'id', ['name' => 'history']);
+        $members = $DB->count_records('cohort_members', ['cohortid' => $historyid]);
         $this->assertEquals(3, $members);
-        $englishid = $DB->get_field('cohort', 'id', array('name' => 'english'));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishid));
+        $englishid = $DB->get_field('cohort', 'id', ['name' => 'english']);
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishid]);
         $this->assertEquals(3, $members);
-        $englishbisid = $DB->get_field('cohort', 'id', array('name' => 'english(bis)'));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $englishbisid));
+        $englishbisid = $DB->get_field('cohort', 'id', ['name' => 'english(bis)']);
+        $members = $DB->count_records('cohort_members', ['cohortid' => $englishbisid]);
         $this->assertEquals(3, $members);
 
         // Direct test of member function.
@@ -345,6 +356,9 @@ abstract class sync_base_testcase extends \advanced_testcase {
         $this->recursive_delete(TEST_AUTH_LDAP_DOMAIN, $testcontainer);
     }
 
+    /** 
+     * Test cohort synchronization based on LDAP attribute.
+     */
     public function test_cohort_attribute_sync() {
         global $CFG, $DB;
 
@@ -365,10 +379,10 @@ abstract class sync_base_testcase extends \advanced_testcase {
         }
 
         // Create 2000 users.
-        $o = array();
-        $o['objectClass'] = array('organizationalUnit');
+        $o = [];
+        $o['objectClass'] = ['organizationalUnit'];
         $o['ou']          = 'users';
-        ldap_add($connection, 'ou='.$o['ou'].','.$topdn, $o);
+        ldap_add($connection, 'ou=' . $o['ou'] . ',' . $topdn, $o);
         for ($i = 1; $i <= 2000; $i++) {
             $this->create_ldap_user($connection, $topdn, $i);
         }
@@ -376,18 +390,30 @@ abstract class sync_base_testcase extends \advanced_testcase {
         // All users will be employees. Odd users will be faculty. Even will be staff.
         // Some will be staff(pt).
         for ($i = 1; $i <= 2000; $i++) {
-            ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                array($this->get_ldap_user_attribute_class() => 'employee'));
+            ldap_mod_add(
+                $connection,
+                "cn=username{$i},ou=users,$topdn",
+                [$this->get_ldap_user_attribute_class() => 'employee']
+            );
             if ($i % 2 == 1) {
-                ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array($this->get_ldap_user_attribute_class() => 'faculty'));
+                ldap_mod_add(
+                    $connection,
+                    "cn=username{$i},ou=users,$topdn",
+                    [$this->get_ldap_user_attribute_class() => 'faculty']
+                );
             } else {
-                ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array($this->get_ldap_user_attribute_class() => 'staff'));
+                ldap_mod_add(
+                    $connection,
+                    "cn=username{$i},ou=users,$topdn",
+                    [$this->get_ldap_user_attribute_class() => 'staff']
+                );
             }
             if ($i % 50 == 0) {
-                ldap_mod_add($connection, "cn=username{$i},ou=users,$topdn",
-                    array($this->get_ldap_user_attribute_class() => 'staff(pt)'));
+                ldap_mod_add(
+                    $connection,
+                    "cn=username{$i},ou=users,$topdn",
+                    [$this->get_ldap_user_attribute_class() => 'staff(pt)']
+                );
             }
         }
 
@@ -400,7 +426,7 @@ abstract class sync_base_testcase extends \advanced_testcase {
         set_config('bind_dn', TEST_AUTH_LDAP_BIND_DN, 'auth_ldap');
         set_config('bind_pw', TEST_AUTH_LDAP_BIND_PW, 'auth_ldap');
         set_config('user_type', TEST_AUTH_LDAP_USER_TYPE, 'auth_ldap');
-        set_config('contexts', 'ou=users,'.$topdn, 'auth_ldap');
+        set_config('contexts', 'ou=users,' . $topdn, 'auth_ldap');
         set_config('search_sub', 0, 'auth_ldap');
         set_config('opt_deref', LDAP_DEREF_NEVER, 'auth_ldap');
         set_config('user_attribute', 'cn', 'auth_ldap');
@@ -467,40 +493,46 @@ abstract class sync_base_testcase extends \advanced_testcase {
 
         // Faculty and staff should have two members and staff(pt) should have one.
         $plugin->sync_cohorts_by_attribute();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $employeeid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $employeeid]);
         $this->assertEquals(2000, $members);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $facultyid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $facultyid]);
         $this->assertEquals(1000, $members);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffid]);
         $this->assertEquals(1000, $members);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffptid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffptid]);
         $this->assertEquals(40, $members);
 
         // Remove a user and then ensure he's re-added.
         $members = $plugin->get_cohort_members($staffid);
         cohort_remove_member($staffid, current($members)->id);
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffid]);
         $this->assertEquals(999, $members);
         $plugin->sync_cohorts_by_attribute();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffid]);
         $this->assertEquals(1000, $members);
 
         // Add an affiliation in LDAP and ensure he'd added.
-        ldap_mod_add($connection, "cn=username500,ou=users,$topdn",
-            array($this->get_ldap_user_attribute_class() => 'faculty'));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $facultyid));
+        ldap_mod_add(
+            $connection,
+            "cn=username500,ou=users,$topdn",
+            [$this->get_ldap_user_attribute_class() => 'faculty']
+        );
+        $members = $DB->count_records('cohort_members', ['cohortid' => $facultyid]);
         $this->assertEquals(1000, $members);
         $plugin->sync_cohorts_by_attribute();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $facultyid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $facultyid]);
         $this->assertEquals(1001, $members);
 
         // Remove a user from a group in LDAP and ensure he's deleted.
-        ldap_mod_del($connection, "cn=username400,ou=users,$topdn",
-            array($this->get_ldap_user_attribute_class() => 'staff'));
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
+        ldap_mod_del(
+            $connection,
+            "cn=username400,ou=users,$topdn",
+            [$this->get_ldap_user_attribute_class() => 'staff']
+        );
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffid]);
         $this->assertEquals(1000, $members);
         $plugin->sync_cohorts_by_attribute();
-        $members = $DB->count_records('cohort_members', array('cohortid' => $staffid));
+        $members = $DB->count_records('cohort_members', ['cohortid' => $staffid]);
         $this->assertEquals(999, $members);
 
         // Cleanup.
@@ -517,8 +549,10 @@ abstract class sync_base_testcase extends \advanced_testcase {
 
         $this->resetAfterTest();
 
-        if (!defined('TEST_AUTH_LDAP_HOST_URL') || !defined('TEST_AUTH_LDAP_BIND_DN') || !defined('TEST_AUTH_LDAP_BIND_PW')
-                || !defined('TEST_AUTH_LDAP_DOMAIN')) {
+        if (
+            !defined('TEST_AUTH_LDAP_HOST_URL') || !defined('TEST_AUTH_LDAP_BIND_DN') || !defined('TEST_AUTH_LDAP_BIND_PW')
+                || !defined('TEST_AUTH_LDAP_DOMAIN')
+        ) {
             $this->markTestSkipped('External LDAP test server not configured.');
         }
 
@@ -552,18 +586,18 @@ abstract class sync_base_testcase extends \advanced_testcase {
      * @param integer $i incremented number for user uniqueness constraint
      */
     protected function create_ldap_user($connection, $topdn, $i) {
-        $o = array();
+        $o = [];
         $o['objectClass']   = $this->get_ldap_user_object_classes();
-        $o['cn']            = 'username'.$i;
-        $o['sn']            = 'Lastname'.$i;
-        $o['givenName']     = 'Firstname'.$i;
+        $o['cn']            = 'username' . $i;
+        $o['sn']            = 'Lastname' . $i;
+        $o['givenName']     = 'Firstname' . $i;
         $o['uid']           = $o['cn'];
         $o['uidnumber']     = 2000 + $i;
         $o['gidNumber']     = 1000 + $i;
         $o['homeDirectory'] = '/';
-        $o['mail']          = 'user'.$i.'@example.com';
-        $o['userPassword']  = 'pass'.$i;
-        ldap_add($connection, 'cn='.$o['cn'].',ou=users,'.$topdn, $o);
+        $o['mail']          = 'user' . $i . '@example.com';
+        $o['userPassword']  = 'pass' . $i;
+        ldap_add($connection, 'cn=' . $o['cn'] . ',ou=users,' . $topdn, $o);
     }
 
     /**
@@ -598,7 +632,7 @@ abstract class sync_base_testcase extends \advanced_testcase {
      * @param integer $i incremented number for user uniqueness constraint
      */
     protected function delete_ldap_user($connection, $topdn, $i) {
-        ldap_delete($connection, 'cn=username'.$i.',ou=users,'.$topdn);
+        ldap_delete($connection, 'cn=username' . $i . ',ou=users,' . $topdn);
     }
 
     /**
@@ -611,7 +645,6 @@ abstract class sync_base_testcase extends \advanced_testcase {
         $auths = get_enabled_auth_plugins(true);
         if (!in_array('ldap', $auths)) {
             $auths[] = 'ldap';
-
         }
         set_config('auth', implode(',', $auths));
     }
@@ -623,9 +656,19 @@ abstract class sync_base_testcase extends \advanced_testcase {
      */
     protected function connect_to_ldap() {
         $debuginfo = '';
-        if (!$connection = ldap_connect_moodle(TEST_AUTH_LDAP_HOST_URL, 3, TEST_AUTH_LDAP_USER_TYPE, TEST_AUTH_LDAP_BIND_DN,
-                TEST_AUTH_LDAP_BIND_PW, LDAP_DEREF_NEVER, $debuginfo, false)) {
-            $this->markTestSkipped('Can not connect to LDAP test server: '.$debuginfo);
+        if (
+            !$connection = ldap_connect_moodle(
+                TEST_AUTH_LDAP_HOST_URL,
+                3,
+                TEST_AUTH_LDAP_USER_TYPE,
+                TEST_AUTH_LDAP_BIND_DN,
+                TEST_AUTH_LDAP_BIND_PW,
+                LDAP_DEREF_NEVER,
+                $debuginfo,
+                false
+            )
+        ) {
+            $this->markTestSkipped('Can not connect to LDAP test server: ' . $debuginfo);
             return false;
         }
         return $connection;
@@ -641,26 +684,35 @@ abstract class sync_base_testcase extends \advanced_testcase {
     protected function recursive_delete($dn, $filter) {
         $ldapconnection = $this->connect_to_ldap();
 
-        if ($res = ldap_list($ldapconnection, $dn, $filter, array('dn'))) {
+        if ($res = ldap_list($ldapconnection, $dn, $filter, ['dn'])) {
             $info = ldap_get_entries($ldapconnection, $res);
 
             if ($info['count'] > 0) {
                 $ldappagedresults = ldap_paged_results_supported(3, $ldapconnection);
                 $ldapcookie = '';
-                $todelete = array();
-                $servercontrols = array();
+                $todelete = [];
+                $servercontrols = [];
                 do {
                     if ($ldappagedresults) {
-                        $servercontrols = array(
-                            array(
-                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
-                                    'size' => 250, 'cookie' => $ldapcookie
-                                )
-                            )
-                        );
+                        $servercontrols = [
+                            [
+                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => [
+                                    'size' => 250, 'cookie' => $ldapcookie,
+                                ],
+                            ],
+                        ];
                     }
-                    $res = ldap_search($ldapconnection, "$filter,$dn", 'cn=*', array('dn'),
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                    $res = ldap_search(
+                        $ldapconnection,
+                        "$filter,$dn",
+                        'cn=*',
+                        ['dn'],
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                     if (!$res) {
                         continue;
                     }
@@ -672,8 +724,15 @@ abstract class sync_base_testcase extends \advanced_testcase {
                     }
                     if ($ldappagedresults) {
                         $ldapcookie = '';
-                        ldap_parse_result($ldapconnection, $res, $errcode, $matcheddn,
-                            $errmsg, $referrals, $controls);
+                        ldap_parse_result(
+                            $ldapconnection,
+                            $res,
+                            $errcode,
+                            $matcheddn,
+                            $errmsg,
+                            $referrals,
+                            $controls
+                        );
                         if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
                             $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                         }
@@ -691,20 +750,29 @@ abstract class sync_base_testcase extends \advanced_testcase {
                         ldap_delete($ldapconnection, $delete);
                     }
                 }
-                $todelete = array();
+                $todelete = [];
 
                 do {
                     if ($ldappagedresults) {
-                        $servercontrols = array(
-                            array(
-                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => array(
-                                    'size' => 250, 'cookie' => $ldapcookie
-                                )
-                            )
-                        );
+                        $servercontrols = [
+                            [
+                                'oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => [
+                                    'size' => 250, 'cookie' => $ldapcookie,
+                                ],
+                            ],
+                        ];
                     }
-                    $res = ldap_search($ldapconnection, "$filter,$dn", 'ou=*', array('dn'),
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                    $res = ldap_search(
+                        $ldapconnection,
+                        "$filter,$dn",
+                        'ou=*',
+                        ['dn'],
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                     if (!$res) {
                         continue;
                     }
@@ -716,8 +784,15 @@ abstract class sync_base_testcase extends \advanced_testcase {
                     }
                     if ($ldappagedresults) {
                         $ldapcookie = '';
-                        ldap_parse_result($ldapconnection, $res, $errcode, $matcheddn,
-                            $errmsg, $referrals, $controls);
+                        ldap_parse_result(
+                            $ldapconnection,
+                            $res,
+                            $errcode,
+                            $matcheddn,
+                            $errmsg,
+                            $referrals,
+                            $controls
+                        );
                         if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
                             $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                         }

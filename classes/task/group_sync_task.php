@@ -26,7 +26,7 @@ namespace local_ldap\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/local/ldap/locallib.php');
+require_once($CFG->dirroot . '/local/ldap/locallib.php');
 
 /**
  * Scheduled task to sync cohorts based on group membership.

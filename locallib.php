@@ -36,7 +36,6 @@ require_once($CFG->dirroot . '/auth/ldap/auth.php');
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class local_ldap extends auth_plugin_ldap {
-
     /** @var array Avoid infinite loop with nested groups in 'funny' directories. */
     private $antirecursionarray;
 
@@ -133,7 +132,7 @@ class local_ldap extends auth_plugin_ldap {
             $contexts = explode(';', $this->config->contexts);
         }
 
-        if (!empty ($this->config->create_context)) {
+        if (!empty($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
         }
 
@@ -142,7 +141,7 @@ class local_ldap extends auth_plugin_ldap {
 
         foreach ($contexts as $context) {
             $context = trim($context);
-            if (empty ($context)) {
+            if (empty($context)) {
                 continue;
             }
 
@@ -158,20 +157,45 @@ class local_ldap extends auth_plugin_ldap {
                 }
                 if ($this->config->search_sub) {
                     // Use ldap_search to find first group from subtree.
-                    $ldapresult = ldap_search($ldapconnection, $context, $filter, [$this->config->group_attribute],
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                    $ldapresult = ldap_search(
+                        $ldapconnection,
+                        $context,
+                        $filter,
+                        [$this->config->group_attribute],
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                 } else {
                     // Search only in this context.
-                    $ldapresult = ldap_list($ldapconnection, $context, $filter, [$this->config->group_attribute],
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                    $ldapresult = ldap_list(
+                        $ldapconnection,
+                        $context,
+                        $filter,
+                        [$this->config->group_attribute],
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                 }
                 $groups = ldap_get_entries($ldapconnection, $ldapresult);
 
                 if ($ldappagedresults) {
                     // Get next server cookie to know if we'll need to continue searching.
                     $ldapcookie = '';
-                    ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
-                        $errmsg, $referrals, $controls);
+                    ldap_parse_result(
+                        $ldapconnection,
+                        $ldapresult,
+                        $errcode,
+                        $matcheddn,
+                        $errmsg,
+                        $referrals,
+                        $controls
+                    );
                     if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
                         $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                     }
@@ -220,13 +244,13 @@ class local_ldap extends auth_plugin_ldap {
             $contexts = explode(';', $this->config->contexts);
         }
 
-        if (!empty ($this->config->create_context)) {
+        if (!empty($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
         }
 
         foreach ($contexts as $context) {
             $context = trim($context);
-            if (empty ($context)) {
+            if (empty($context)) {
                 continue;
             }
 
@@ -236,12 +260,11 @@ class local_ldap extends auth_plugin_ldap {
                 return false;
             }
 
-            if (!empty ($resultg) && ldap_count_entries($ldapconnection, $resultg)) {
+            if (!empty($resultg) && ldap_count_entries($ldapconnection, $resultg)) {
                 $groupe = ldap_get_entries($ldapconnection, $resultg);
 
                 if (is_countable($groupe[0][$this->config->memberattribute])) {
                     for ($g = 0; $g < (count($groupe[0][$this->config->memberattribute]) - 1); $g++) {
-
                         $memberstring = trim($groupe[0][$this->config->memberattribute][$g]);
                         if ($memberstring != "") {
                             // Try to speed the search if the member value is
@@ -327,13 +350,13 @@ class local_ldap extends auth_plugin_ldap {
             $contexts = explode(';', $this->config->contexts);
         }
 
-        if (!empty ($this->config->create_context)) {
+        if (!empty($this->config->create_context)) {
             array_push($contexts, $this->config->create_context);
         }
 
         foreach ($contexts as $context) {
             $context = trim($context);
-            if (empty ($context)) {
+            if (empty($context)) {
                 continue;
             }
             $start = 0;
@@ -349,7 +372,7 @@ class local_ldap extends auth_plugin_ldap {
                     return false;
                 }
 
-                if (!empty ($resultg) && ldap_count_entries($ldapconnection, $resultg)) {
+                if (!empty($resultg) && ldap_count_entries($ldapconnection, $resultg)) {
                     $groupe = ldap_get_entries($ldapconnection, $resultg);
 
                     // There are two possibilities why the result in the
@@ -362,7 +385,7 @@ class local_ldap extends auth_plugin_ldap {
                     // to `*`, e.g. `member;range=2000-*`.
                     //
                     // 2.  The group is empty, i.e. has no members at all.
-                    if (is_countable($groupe) && empty ($groupe[0][$attribut])) {
+                    if (is_countable($groupe) && empty($groupe[0][$attribut])) {
                         $attribut = $this->config->memberattribute . ";range=" . $start . '-*';
                         $fini = true;
 
@@ -377,7 +400,6 @@ class local_ldap extends auth_plugin_ldap {
                         $fini = true;
                     } else {
                         for ($g = 0; $g < (count($groupe[0][$attribut]) - 1); $g++) {
-
                             $memberstring = trim($groupe[0][$attribut][$g]);
                             if ($memberstring != "") {
                                 // In AD, group object's member values are always full DNs.
@@ -422,8 +444,8 @@ class local_ldap extends auth_plugin_ldap {
      */
     private function get_username_byattr($attr, $value) {
         // Build a filter; note than nested groups will be removed here, so they are NOT supported.
-        $filter = '(&('.$this->config->user_attribute.'=*)'.$this->config->objectclass.')';
-        $filter = '(&'.$filter.'('.$attr.'='.$value.'))';
+        $filter = '(&(' . $this->config->user_attribute . '=*)' . $this->config->objectclass . ')';
+        $filter = '(&' . $filter . '(' . $attr . '=' . $value . '))';
 
         // Call Moodle ldap_get_userlist that return it as an array with Moodle user attributes names.
         $matchings = $this->ldap_get_userlist($filter);
@@ -447,7 +469,7 @@ class local_ldap extends auth_plugin_ldap {
      * @return string or false
      */
     private function get_username_bydn($dn) {
-        $filter = '(&('.$this->config->user_attribute.'=*)'.$this->config->objectclass.')';
+        $filter = '(&(' . $this->config->user_attribute . '=*)' . $this->config->objectclass . ')';
         $ldapconnection = $this->ldap_connect();
         $ldapresult = ldap_read($ldapconnection, $dn, $filter, [$this->config->user_attribute]);
 
@@ -524,13 +546,13 @@ class local_ldap extends auth_plugin_ldap {
      */
     public function get_attribute_distinct_values() {
         // Only these cohorts will be synched.
-        if (!empty($this->config->cohort_synching_ldap_attribute_idnumbers )) {
+        if (!empty($this->config->cohort_synching_ldap_attribute_idnumbers)) {
             return explode(',', $this->config->cohort_synching_ldap_attribute_idnumbers);
         }
 
         // Build a filter to fetch all users having something in the target LDAP attribute.
-        $filter = '(&('.$this->config->user_attribute.'=*)'.$this->config->objectclass.')';
-        $filter = '(&'.$filter.'('.$this->config->cohort_synching_ldap_attribute_attribute.'=*))';
+        $filter = '(&(' . $this->config->user_attribute . '=*)' . $this->config->objectclass . ')';
+        $filter = '(&' . $filter . '(' . $this->config->cohort_synching_ldap_attribute_attribute . '=*))';
 
         $ldapconnection = $this->ldap_connect();
 
@@ -563,14 +585,30 @@ class local_ldap extends auth_plugin_ldap {
                 }
                 if ($this->config->search_sub) {
                     // Use ldap_search to find first user from subtree.
-                    $ldapresult = ldap_search($ldapconnection, $context, $filter,
+                    $ldapresult = ldap_search(
+                        $ldapconnection,
+                        $context,
+                        $filter,
                         [$this->config->cohort_synching_ldap_attribute_attribute],
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                 } else {
                     // Search only in this context.
-                    $ldapresult = ldap_list($ldapconnection, $context, $filter,
+                    $ldapresult = ldap_list(
+                        $ldapconnection,
+                        $context,
+                        $filter,
                         [$this->config->cohort_synching_ldap_attribute_attribute],
-                        0, -1, -1, LDAP_DEREF_NEVER, $servercontrols);
+                        0,
+                        -1,
+                        -1,
+                        LDAP_DEREF_NEVER,
+                        $servercontrols
+                    );
                 }
 
                 if (!$ldapresult) {
@@ -581,8 +619,15 @@ class local_ldap extends auth_plugin_ldap {
                     // Get next server cookie to know if we'll need to continue searching.
                     $ldapcookie = '';
                     // Get next cookie from controls.
-                    ldap_parse_result($ldapconnection, $ldapresult, $errcode, $matcheddn,
-                        $errmsg, $referrals, $controls);
+                    ldap_parse_result(
+                        $ldapconnection,
+                        $ldapresult,
+                        $errcode,
+                        $matcheddn,
+                        $errmsg,
+                        $referrals,
+                        $controls
+                    );
                     if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
                         $ldapcookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
                     }
@@ -597,15 +642,17 @@ class local_ldap extends auth_plugin_ldap {
                 for ($i = 0; $i < count($users); $i++) {
                     $count = $users[$i][$attributekey]['count'];
                     for ($j = 0; $j < $count; $j++) {
-                        $value = core_text::convert($users[$i][$attributekey][$j],
-                                    $this->config->ldapencoding, 'utf-8');
-                        if (!in_array ($value, $matchings)) {
+                        $value = core_text::convert(
+                            $users[$i][$attributekey][$j],
+                            $this->config->ldapencoding,
+                            'utf-8'
+                        );
+                        if (!in_array($value, $matchings)) {
                             array_push($matchings, $value);
                         }
                     }
                 }
             } while ($ldappagedresults && $ldapcookie !== null && $ldapcookie != '');
-
         }
 
         $this->ldap_close(true);
@@ -622,9 +669,9 @@ class local_ldap extends auth_plugin_ldap {
         global $CFG, $DB;
 
         // Build a filter.
-        $filter = '(&('.$this->config->user_attribute.'=*)'.$this->config->objectclass.')';
-        $filter = '(&'.$filter.'('.$this->config->cohort_synching_ldap_attribute_attribute.
-            '='.ldap_filter_addslashes($attributevalue).'))';
+        $filter = '(&(' . $this->config->user_attribute . '=*)' . $this->config->objectclass . ')';
+        $filter = '(&' . $filter . '(' . $this->config->cohort_synching_ldap_attribute_attribute .
+            '=' . ldap_filter_addslashes($attributevalue) . '))';
 
         // Call Moodle ldap_get_userlist that return it as an array with Moodle user attributes names.
         $matchings = $this->ldap_get_userlist($filter);
@@ -710,8 +757,11 @@ class local_ldap extends auth_plugin_ldap {
                 $cohort = new stdClass();
                 $cohort->name = $cohort->idnumber = $cohortname;
                 $cohort->contextid = context_system::instance()->id;
-                $cohort->description = get_string('cohort_synchronized_with_attribute', 'local_ldap',
-                    $this->config->cohort_synching_ldap_attribute_attribute);
+                $cohort->description = get_string(
+                    'cohort_synchronized_with_attribute',
+                    'local_ldap',
+                    $this->config->cohort_synching_ldap_attribute_attribute
+                );
                 $cohortid = cohort_add_cohort($cohort);
             } else {
                 $cohortid = $cohort->id;
