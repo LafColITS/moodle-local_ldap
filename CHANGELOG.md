@@ -1,6 +1,10 @@
 # Changelog
 
-## v4.4.0 (April 24,2024)
+## v4.4.1 (July 15, 2026)
+
+- Add composer support
+
+## v4.4.0 (April 24, 2024)
 
 - Dropped support for Moodle 4.1-4.3
 - Added support for Moodle 4.4

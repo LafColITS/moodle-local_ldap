@@ -1,0 +1,12 @@
+{
+    "name": "lafayettecollege/moodle-local_ldap",
+    "description": "This plugin synchronizes Moodle cohorts against an LDAP directory using either group memberships or attribute values.",
+    "type": "moodle-local",
+    "require": {
+        "composer/installers": "*"
+    },
+    "license": "GPL-3.0-or-later",
+    "extra": {
+        "installer-name": "ldap"
+    }
+}
